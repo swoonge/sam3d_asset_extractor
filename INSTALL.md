@@ -79,7 +79,7 @@ pip install -e .
 
 ## 6. Smoke test
 
-레포에 포함된 샘플 데이터 (`datas/move_fruits_into_bowl/`)를 그대로 사용합니다.
+레포에 포함된 샘플 데이터 (`datas/move_ham_onto_box/`)를 그대로 사용합니다.
 RGB 1장 + 정렬된 depth + 카메라 intrinsics 세 개가 모두 같이 들어있습니다.
 
 ```bash
@@ -88,17 +88,17 @@ sam3d-asset-extractor --help
 
 # 2) dry-run (의존성 체크 없이 입력/레이아웃만 확인)
 sam3d-asset-extractor \
-  --image       datas/move_fruits_into_bowl/rgb/000000.png \
-  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
-  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
+  --image       datas/move_ham_onto_box/rgb/000000.png \
+  --depth-image datas/move_ham_onto_box/depth/000000.png \
+  --cam-k       datas/move_ham_onto_box/cam_K.txt \
   --output-dir  /tmp/sae_smoke \
   --dry-run
 
 # 3) 실제 실행 (GPU + conda env 갖춰진 경우)
 sam3d-asset-extractor \
-  --image       datas/move_fruits_into_bowl/rgb/000000.png \
-  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
-  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
+  --image       datas/move_ham_onto_box/rgb/000000.png \
+  --depth-image datas/move_ham_onto_box/depth/000000.png \
+  --cam-k       datas/move_ham_onto_box/cam_K.txt \
   --output-dir  /tmp/sae_smoke \
   --latest-only --overwrite
 ```
