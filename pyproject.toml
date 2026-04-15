@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sam3d-asset-extractor"
+version = "0.1.0"
+description = "Extract per-object meshes from RGB(-D) images using SAM2 masking and SAM3D inference."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "swoonge" }]
+dependencies = [
+    # Numpy 2.x is OK (we don't rely on internal dtypes); block 3.x pre-release.
+    "numpy>=1.24,<3",
+    # cv2 4.5+ has the stable modern image-processing API we rely on.
+    "opencv-python>=4.5",
+    "Pillow>=9.0",
+    # PLY parsing API is stable; 0.7+ covers all known deployments.
+    "plyfile>=0.7",
+    # trimesh v3 and v4 are both supported via compat shims in mesh/decimate.py.
+    "trimesh>=3.15,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7,<9",
+    "pytest-cov>=4",
+]
+viz = [
+    "open3d>=0.15",
+    "matplotlib>=3.5",
+    "gradio>=3.0",
+]
+
+[project.scripts]
+sam3d-asset-extractor = "sam3d_asset_extractor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

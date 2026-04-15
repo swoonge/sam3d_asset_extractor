@@ -1,0 +1,38 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Pipeline outputs
+outputs/
+*.ply
+*.glb
+*.obj
+*.npz
+*.mp4
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# External model repos (must be provided at runtime via SAM2_ROOT / SAM3D_ROOT
+# or as symlinks/siblings of this repo). Never commit checkpoints.
+sam2/
+sam-3d-objects/
+
+# Secrets (never commit)
+hugging_face_token.txt
+.env
+.env.local
