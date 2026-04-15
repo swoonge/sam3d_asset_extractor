@@ -79,28 +79,26 @@ pip install -e .
 
 ## 6. Smoke test
 
-RGB + depth + intrinsics 세 개가 모두 필요합니다. 아래 예시는 이 레포에서
-함께 제공하는 `data/move_fruits_into_bowl/`의 첫 프레임을 사용합니다.
+레포에 포함된 샘플 데이터 (`datas/move_fruits_into_bowl/`)를 그대로 사용합니다.
+RGB 1장 + 정렬된 depth + 카메라 intrinsics 세 개가 모두 같이 들어있습니다.
 
 ```bash
-DATA_ROOT=/path/to/data/move_fruits_into_bowl
-
 # 1) CLI help
 sam3d-asset-extractor --help
 
 # 2) dry-run (의존성 체크 없이 입력/레이아웃만 확인)
 sam3d-asset-extractor \
-  --image       "$DATA_ROOT/rgb/000000.png" \
-  --depth-image "$DATA_ROOT/depth/000000.png" \
-  --cam-k       "$DATA_ROOT/cam_K.txt" \
+  --image       datas/move_fruits_into_bowl/rgb/000000.png \
+  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
+  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
   --output-dir  /tmp/sae_smoke \
   --dry-run
 
 # 3) 실제 실행 (GPU + conda env 갖춰진 경우)
 sam3d-asset-extractor \
-  --image       "$DATA_ROOT/rgb/000000.png" \
-  --depth-image "$DATA_ROOT/depth/000000.png" \
-  --cam-k       "$DATA_ROOT/cam_K.txt" \
+  --image       datas/move_fruits_into_bowl/rgb/000000.png \
+  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
+  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
   --output-dir  /tmp/sae_smoke \
   --latest-only --overwrite
 ```

@@ -19,6 +19,8 @@ RGB(-D) 이미지에서 객체 단위 메시를 추출해 시뮬레이터 자산
 
 ## Quick Start
 
+레포에 포함된 샘플(`datas/move_fruits_into_bowl/`)로 바로 실행해볼 수 있습니다.
+
 ```bash
 # 1) 환경 준비 (자세한 내용은 INSTALL.md)
 export HF_TOKEN=hf_...            # SAM3D 체크포인트 다운로드에 필요
@@ -27,17 +29,17 @@ export SAM3D_ROOT=/path/to/sam-3d-objects
 
 # 2) 기본 실행 (전체 pointmap + 자동 마스킹 + decimate on)
 sam3d-asset-extractor \
-  --image       /path/to/rgb.png \
-  --depth-image /path/to/depth.png \
-  --cam-k       /path/to/cam_K.txt \
+  --image       datas/move_fruits_into_bowl/rgb/000000.png \
+  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
+  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
   --output-dir  outputs/demo \
   --overwrite
 
 # 3) 마스크 영역만 pointmap으로 넣고 싶을 때
 sam3d-asset-extractor \
-  --image       /path/to/rgb.png \
-  --depth-image /path/to/depth.png \
-  --cam-k       /path/to/cam_K.txt \
+  --image       datas/move_fruits_into_bowl/rgb/000000.png \
+  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
+  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
   --sam3d-input cropped \
   --output-dir  outputs/demo --overwrite
 ```
@@ -45,11 +47,19 @@ sam3d-asset-extractor \
 설치 없이 저장소 안에서 바로 실행하려면:
 ```bash
 ./run_pipeline.sh \
-  --image       datas/coffee_maker_sample.jpg \
-  --depth-image /path/to/depth.png \
-  --cam-k       /path/to/cam_K.txt \
+  --image       datas/move_fruits_into_bowl/rgb/000000.png \
+  --depth-image datas/move_fruits_into_bowl/depth/000000.png \
+  --cam-k       datas/move_fruits_into_bowl/cam_K.txt \
   --output-dir  outputs/demo --overwrite
 ```
+
+### 포함된 샘플 데이터
+
+| 경로 | 내용 |
+|---|---|
+| `datas/move_fruits_into_bowl/rgb/000000.png` | 848×480 RGB |
+| `datas/move_fruits_into_bowl/depth/000000.png` | 848×480 16-bit depth (mm 단위, `--depth-scale auto`가 0.001로 해석) |
+| `datas/move_fruits_into_bowl/cam_K.txt` | 3×3 카메라 intrinsics |
 
 ## 주요 CLI 옵션
 
@@ -129,7 +139,10 @@ sam3d_asset_extractor/
   configs/               # (선택) 프로젝트별 설정 YAML 자리
   tests/                 # pytest
   datas/
-    coffee_maker_sample.jpg
+    move_fruits_into_bowl/
+      rgb/000000.png
+      depth/000000.png
+      cam_K.txt
   run_pipeline.sh        # python -m 래퍼
   pyproject.toml
   requirements.txt
