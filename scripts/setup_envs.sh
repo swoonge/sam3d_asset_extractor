@@ -23,7 +23,7 @@ echo "========================================="
 echo " sam3d_asset_extractor: setup conda envs"
 echo "========================================="
 
-# ─── 1. sam2 env ──────────────────────────────────────────────────────────────
+# ─── 1. sam2 env (Python 3.10, PyTorch cu124, C++ extension build) ────────────
 echo ""
 echo ">>> [1/2] Creating sam2 env..."
 $CONDA create -y -n sam2 python=3.10
@@ -31,7 +31,7 @@ $CONDA install -y -n sam2 \
   -c pytorch -c nvidia -c conda-forge \
   pytorch torchvision pytorch-cuda=12.4 "mkl<2025"
 
-echo ">>> Installing SAM2 package..."
+echo ">>> Installing SAM2 package (builds sam2/_C.so)..."
 $CONDA run --no-capture-output -n sam2 \
   pip install -e "$REPO_ROOT/sam2"
 
@@ -39,70 +39,70 @@ echo ">>> Installing sam2 env extra deps..."
 $CONDA run --no-capture-output -n sam2 \
   pip install numpy opencv-python Pillow
 
-echo ">>> Verifying sam2 env..."
-$CONDA run --no-capture-output -n sam2 python -c "
+echo ">>> Verifying sam2 env (CWD=/tmp to dodge sam2/ shadowing)..."
+(cd /tmp && $CONDA run --no-capture-output -n sam2 python -c "
 import torch
 from sam2.build_sam import build_sam2
-print('sam2 env OK | torch', torch.__version__, '| cuda', torch.cuda.is_available())
-"
+print('sam2 env OK | torch', torch.__version__, '| cuda:', torch.cuda.is_available())
+")
 
 # ─── 2. sam3d-objects env ─────────────────────────────────────────────────────
+# Official env YAML handles the system-level conda packages (CUDA 12.1 toolkit,
+# Qt, X11, compilers). PyTorch itself is installed via pip from the cu121 index
+# to avoid the `pytorch-cuda=12.1` ↔ `libcublas=12.1.3.1` version conflict that
+# arises when trying to mix conda-forge pytorch with the strict libcublas pin
+# shipped in the env YAML.
 echo ""
-echo ">>> [2/2] Creating sam3d-objects env..."
+echo ">>> [2/2] Creating sam3d-objects env from official YAML..."
 
-# Option A: use sam-3d-objects' official conda env yml (recommended if available)
-if [ -f "$REPO_ROOT/sam-3d-objects/environments/default.yml" ]; then
-  echo "    Using sam-3d-objects/environments/default.yml..."
-  $CONDA env create -y -f "$REPO_ROOT/sam-3d-objects/environments/default.yml"
-else
-  echo "    Official env yml not found, creating minimal env..."
-  $CONDA create -y -n sam3d-objects python=3.10
+if [ ! -f "$REPO_ROOT/sam-3d-objects/environments/default.yml" ]; then
+  echo "ERROR: $REPO_ROOT/sam-3d-objects/environments/default.yml not found." >&2
+  echo "       Did setup_externals.sh complete?" >&2
+  exit 1
 fi
 
-# Ensure MKL < 2025 (PyTorch 2.5.1 compatibility)
-$CONDA install -y -n sam3d-objects -c conda-forge "mkl<2025" || true
+$CONDA env create -y -f "$REPO_ROOT/sam-3d-objects/environments/default.yml"
 
-echo ">>> Installing PyTorch (cu121, matching sam-3d-objects' tested config)..."
-$CONDA install -y -n sam3d-objects \
-  -c pytorch -c nvidia -c conda-forge \
-  pytorch torchvision pytorch-cuda=12.1 "mkl<2025" || true
-
-echo ">>> Installing sam-3d-objects base dependencies (bpy excluded)..."
+echo ">>> Installing sam-3d-objects Python deps (PyTorch cu121 + curated deps)..."
+# requirements-sam3d-runtime.txt contains the upstream base requirements minus
+# `bpy==4.3.0` (Python 3.10/3.11 wheel unavailable). It transitively pulls
+# torch==2.5.1+cu121 + torchvision + CUDA wheels via the pytorch.org index.
+export PIP_EXTRA_INDEX_URL
 $CONDA run --no-capture-output -n sam3d-objects \
-  pip install \
-    --extra-index-url "$PIP_EXTRA_INDEX_URL" \
-    -r "$REPO_ROOT/requirements-sam3d-runtime.txt"
+  pip install -r "$REPO_ROOT/requirements-sam3d-runtime.txt"
 
 echo ">>> Installing pytorch3d + flash_attn..."
 $CONDA run --no-capture-output -n sam3d-objects \
-  pip install \
-    --extra-index-url "$PIP_EXTRA_INDEX_URL" \
-    -r "$REPO_ROOT/sam-3d-objects/requirements.p3d.txt" || {
-  echo "WARNING: pytorch3d install failed. May need manual build."
-}
+  pip install -r "$REPO_ROOT/sam-3d-objects/requirements.p3d.txt" \
+  || echo "WARNING: p3d install had errors — may need manual fix (nvcc/arch)"
 
 echo ">>> Installing kaolin + gsplat + seaborn + gradio..."
+export PIP_FIND_LINKS
 $CONDA run --no-capture-output -n sam3d-objects \
-  pip install \
-    --extra-index-url "$PIP_EXTRA_INDEX_URL" \
-    --find-links "$PIP_FIND_LINKS" \
-    -r "$REPO_ROOT/sam-3d-objects/requirements.inference.txt" || {
-  echo "WARNING: kaolin/gsplat install failed. May need manual build."
-}
+  pip install -r "$REPO_ROOT/sam-3d-objects/requirements.inference.txt" \
+  || echo "WARNING: kaolin/gsplat install had errors — may need manual fix"
 
-echo ">>> Installing sam3d_asset_extractor + open3d + mesh tools..."
+echo ">>> Installing sam3d_asset_extractor (editable, dev extras)..."
 $CONDA run --no-capture-output -n sam3d-objects \
-  pip install -e "$REPO_ROOT[dev]" open3d
+  pip install -e "$REPO_ROOT[dev]"
 
 echo ">>> Verifying sam3d-objects env..."
-$CONDA run --no-capture-output -n sam3d-objects python -c "
+(cd /tmp && $CONDA run --no-capture-output -n sam3d-objects python -c "
 import os; os.environ['LIDRA_SKIP_INIT'] = 'true'
-import torch, trimesh, plyfile, open3d
-print('sam3d-objects env OK | torch', torch.__version__, '| cuda', torch.cuda.is_available())
-"
+import torch, trimesh, plyfile, open3d, omegaconf
+print('sam3d-objects env OK | torch', torch.__version__,
+      '| cuda:', torch.cuda.is_available(), '| cuda_ver:', torch.version.cuda)
+")
 
 echo ""
 echo "========================================="
 echo " Setup complete."
 echo " Envs: sam2, sam3d-objects"
 echo "========================================="
+echo "Next:"
+echo "  export HF_TOKEN=hf_..."
+echo "  conda run --no-capture-output -n sam3d-objects sam3d-asset-extractor \\"
+echo "    --image datas/move_ham_onto_box/rgb/000000.png \\"
+echo "    --depth-image datas/move_ham_onto_box/depth/000000.png \\"
+echo "    --cam-k datas/move_ham_onto_box/cam_K.txt \\"
+echo "    --output-dir outputs/demo --latest-only --overwrite"
