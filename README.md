@@ -143,6 +143,12 @@ sam3d_asset_extractor/
       rgb/000000.png
       depth/000000.png
       cam_K.txt
+  scripts/
+    setup_externals.sh   # sam2 + sam-3d-objects clone + 체크포인트
+    setup_envs.sh        # conda env 생성 자동화
+  sam2/                  # ← git clone (gitignored)
+  sam-3d-objects/        # ← git clone (gitignored)
+  requirements-sam3d-runtime.txt  # sam-3d-objects deps (bpy 제외)
   run_pipeline.sh        # python -m 래퍼
   pyproject.toml
   requirements.txt
@@ -152,9 +158,17 @@ sam3d_asset_extractor/
 
 ## 외부 의존성
 
-외부 레포 `sam2/`와 `sam-3d-objects/`는 이 레포에 포함되지 않습니다.
-환경변수 `SAM2_ROOT`, `SAM3D_ROOT`로 경로를 지정하거나, 상위/형제 경로에 둔 채 기본 탐색에 맡길 수 있습니다. 
-설치/설정 자세한 내용은 [INSTALL.md](INSTALL.md).
+SAM2와 SAM3D Objects를 **본 레포 내부에 `git clone`**하여 사용합니다.
+`pip install -e`로 외부 레포를 설치하지 않으며(sam2의 C++ 빌드만 예외), `sys.path`로
+직접 참조합니다. `.gitignore`에 의해 커밋되지 않습니다.
+
+```bash
+# 레포 clone 후 한 번만
+bash scripts/setup_externals.sh   # sam2, sam-3d-objects clone + 체크포인트
+bash scripts/setup_envs.sh        # conda env 2개 생성 + deps 설치
+```
+
+단계별 수동 설치는 [INSTALL.md](INSTALL.md)를 참고하세요.
 
 ### 입력 요구사항
 RGB + depth + intrinsics 세 개가 **항상** 필요합니다. 하나라도 누락되면
@@ -164,8 +178,13 @@ RGB + depth + intrinsics 세 개가 **항상** 필요합니다. 하나라도 누
 
 ## 트러블슈팅
 
+자주 만나는 이슈들. 전체 표는 [INSTALL.md 트러블슈팅](INSTALL.md#트러블슈팅) 참조.
+
+- `undefined symbol: iJIT_NotifyEvent` — MKL 2025 이슈. `conda install -n <env> -c conda-forge "mkl<2025"` 로 다운그레이드
+- `Could not find a version that satisfies the requirement bpy==4.3.0` — Python 3.10에 bpy 4.3 wheel이 없음. `pip install ... || true` 로 무시 가능 (본 파이프라인은 bpy 미사용)
+- `No module named pytest` — dev extras 미설치. `pip install -e ".[dev]"` 로 재설치
 - `conda not found in PATH` — `source ~/anaconda3/etc/profile.d/conda.sh` 또는 환경변수 점검
-- `sam2 / sam3d_objects import 실패` — 각 conda env에 `pip install -e ./sam2` / `pip install -e ./sam-3d-objects[inference]` 필요
+- `sam2 / sam3d_objects import 실패` — 각 conda env에서 `pip install -e ./sam2` / `pip install -e ./sam-3d-objects[inference]`
 - `sam2._C` 관련 오류 — SAM2 C++/CUDA 확장 재빌드 (`cd $SAM2_ROOT && pip install -e .`)
 - `HF_TOKEN not set` — `export HF_TOKEN=hf_...` 또는 `--skip-hf-check`
 - `cv2.error … waitKey` (manual 모드) — 원격 세션에서 실행 중이면 X 포워딩 또는 VNC 필요
